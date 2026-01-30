@@ -1,0 +1,4 @@
+stem==1.8.2
+PySocks==1.7.1
+cryptography==41.0.7
+click==8.1.7
