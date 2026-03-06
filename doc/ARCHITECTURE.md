@@ -115,8 +115,8 @@ These endpoints manage the "Database-per-Profile" lifecycle. The backend must un
 
 | Method | Endpoint | Description | Request Payload (Example) | Response Payload (Example) |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/auth/register` | Creates a new identity, generates the Ed25519 key pair, and creates the encrypted `[username].aetherdb`. | `{"username": "elena", "password": "..."}` | `{"status": "success", "message": "Profile created."}` |
-| `POST` | `/auth/login` | Unlocks the user's encrypted SQLite database and loads the Tor keys into RAM. | `{"username": "elena", "password": "..."}` | `{"status": "success", "message": "Database unlocked."}` |
+| `POST` | `/auth/register` | Creates a new identity, generates the Ed25519 key pair, and creates the encrypted `[username].aetherdb`. | `{"username": "elena", "password": "..."}` | `{"status": "success", "message": "Profile created.", "onion_address": "v2c7...onion"}` |
+| `POST` | `/auth/login` | Unlocks the user's encrypted SQLite database and loads the Tor keys into RAM. | `{"username": "elena", "password": "..."}` | `{"status": "success", "message": "Database unlocked.", "onion_address": "v2c7...onion"}` |
 | `POST` | `/auth/logout` | Locks the database and securely wipes the cryptographic keys from the backend's RAM. | *None* | `{"status": "success"}` |
 
 #### 3.5.2 Contacts
