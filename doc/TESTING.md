@@ -98,3 +98,43 @@ Our team places great emphasis on systematic bug resolution to prevent technical
   2. *Expected behavior*
   3. *Actual behavior*
 * **Regression Testing:** When a bug is fixed (using the branch prefix `bugfix/`), an accompanying unit or integration test **must** be written. This test ensures that the exact same error will be immediately caught by the CI/CD pipeline if the code is altered again in the future.
+
+## 7. Code Review Process
+
+To maintain our high security and quality standards, the Aether team performs systematic code reviews at regular intervals. These reviews are designed to catch complex architectural flaws, ensure adherence to "Security by Design" principles, and maintain high code quality across the entire project.
+
+### 7.1 Official Aether Code Review Checklist
+
+The following checklist must be systematically applied during every code review session.
+
+#### 1. Security & Privacy by Design (NFR-01, NFR-03)
+
+* [ ] **Zero IP Leaks:** Verified that no external HTTP/UDP requests bypass the Tor SOCKS5 proxy (especially relevant for new WebRTC features).
+* [ ] **Log Sanitization:** Manually checked that no sensitive data (private keys, plaintext messages, onion addresses) is logged.
+* [ ] **Memory Security (Forward Secrecy):** Ephemeral keys (e.g., Noise handshakes) and decrypted DB passwords are explicitly wiped from RAM after use.
+* [ ] **IPC & Localhost Security:** Backend endpoints strictly enforce authentication via the ephemeral API key (`X-Aether-API-Key`) to prevent local attack vectors.
+* [ ] **Context Isolation (Electron):** `preload.js` remains minimal; no generic Node.js APIs (`fs`, `child_process`) are exposed to the Svelte frontend.
+
+#### 2. Architecture & Tor Integration
+
+* [ ] **Timing Attacks & Jitter (FR-08):** Automated responses (like delivery ACKs) include randomized delays (jitter) to mitigate latency analysis.
+* [ ] **Fail-Closed Principle:** If the Tor daemon disconnects, outgoing messages are safely queued (`OUTGOING_CREATED`); no clearnet fallbacks are attempted.
+* [ ] **Async Decoupling:** Blocking Tor network calls are handled by background retry workers and do not block the REST API controller.
+
+#### 3. Database & Persistence (NFR-04)
+
+* [ ] **Database-per-Profile:** Sticking to the strict 1:1 architecture (max. one identity per SQLite DB) to avoid cross-tenant data leaks.
+* [ ] **Secure Deletion:** Verified that `PRAGMA secure_delete = ON` is not overridden or bypassed.
+* [ ] **SQL Injection (Logic Check):** Checked for dynamic table or column name concatenations that linters/parameterized queries might miss.
+* [ ] **Repository Pattern:** Database interactions occur *strictly* within the Data Access Layer, passing only DTOs to the Service Layer.
+
+#### 4. Clean Code & Academic Standards
+
+* [ ] **"Why over What" Comments:** Complex cryptographic implementations or Tor workarounds include comments explaining the architectural trade-offs.
+* [ ] **Generic Error Handling:** UI errors are helpful but generic; no stack traces or sensitive system states are leaked.
+* [ ] **Naming Conventions:** Variables, methods, and comments are consistently in English and self-explanatory.
+
+#### 5. Quality of Tests (Meaningful Test Cases)
+
+* [ ] **Security Edge Cases:** Added/updated tests to cover failure states (e.g., rejected handshakes, broken Tor mocks, invalid API keys).
+* [ ] **Bugfix Regression:** If this is a bugfix PR, a specific test has been added to prevent this exact regression in the future.
