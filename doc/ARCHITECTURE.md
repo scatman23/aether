@@ -132,7 +132,7 @@ These endpoints manage the "Database-per-Profile" lifecycle. The backend must un
 
 | Method | Endpoint | Description | Request Payload (Example) | Response Payload (Example) |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/chats` | Returns all chats including their most recent message (for the UI chat list). | *None* | `[{"chat_id": 1, "is_group": 0, "title": null, "last_message": {"id": 42, "content": "Hello", "status": "INCOMING_UNREAD"}}]` |
+| `GET` | `/chats` | Returns all chats including their most recent message (for the UI chat list). | *None* | `[{"chat_id": 1, "is_group": 0, "contact_ids": [{"contact_id": 12}] "title": null, "last_message": {"id": 42, "content": "Hello", "status": "INCOMING_UNREAD"}}]` |
 | `GET` | `/chats/{id}/messages` | Returns the full message history for a specific chat. | *None* | `[{"id": 42, "sender_contact_id": 1, "content": "Hello", "timestamp": "2026-02-24T15:36:26Z", "status": "INCOMING_UNREAD"}]` |
 | `DELETE` | `/chats/{id}` | Securely wipes the message history of a chat (`PRAGMA secure_delete`). | *None* | `{"status": "success"}` |
 | `POST` | `/messages` | Queues a new outbound message. Sets status to `OUTGOING_CREATED`. The background worker handles the Tor routing. | `{"chat_id": 1, "content": "Hello via Tor!"}` | `{"message_id": 123, "status": "OUTGOING_CREATED"}` |
