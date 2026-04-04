@@ -143,7 +143,7 @@ These endpoints manage the "Database-per-Profile" lifecycle. The backend must un
 | Method | Endpoint | Description | Request Payload (Example) | Response Payload (Example) |
 | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/system/status` | Returns the current Tor daemon bootstrap percentage and network health. | *None* | `{"tor_bootstrap_percent": 100, "status": "ready"}` |
-| `GET` | `/system/sync?since={timestamp}` | Long-polling endpoint for Svelte Stores. Returns new incoming messages and status updates (e.g., `OUTGOING_RECEIVED`) since the provided timestamp. | *None* | `{"new_messages": [...], "status_updates": [{"message_id": 123, "status": "OUTGOING_RECEIVED"}]}` |
+| `GET` | `/system/sync?since={timestamp}` | Long-polling endpoint for Svelte Stores. Returns new incoming messages and status updates (e.g., `OUTGOING_RECEIVED`) since the provided timestamp. | *None* | `{"new_messages": [{"id": 42, "chat_id": 1, "sender_contact_id": 1, "content": "Hello", "timestamp": "2026-02-24T15:36:26Z", "status": "INCOMING_UNREAD"}], "status_updates": [{"chat_id": 1, "message_id": 123, "status": "OUTGOING_RECEIVED"}]}` |
 | `POST` | `/export` | Generates a securely encrypted `.aetherbak` JSON archive (UC-10) containing the Identity, Contacts, and optionally the Chat History. | `{"export_password": "...", "include_chats": true}` | `{"status": "success", "file_path": "/path/to/export.aetherbak"}` |
 
 ## 4. Cryptography & Network Security
