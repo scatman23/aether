@@ -278,7 +278,7 @@ CREATE TABLE "message" (
     "status" TEXT NOT NULL CHECK ("status" IN ('OUTGOING_CREATED', 'OUTGOING_RECEIVED', 'INCOMING_UNREAD', 'INCOMING_READ')),
     
     FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE,
-    FOREIGN KEY ("sender_contact_id") REFERENCES "contact"("id") ON DELETE SET NULL,
+    FOREIGN KEY ("sender_contact_id") REFERENCES "contact"("id") ON DELETE CASCADE,
     
     -- Domain integrity constraint: 
     -- If outgoing, there must be no sender_contact_id. 
