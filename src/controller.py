@@ -270,7 +270,7 @@ def system_sync():
     
     with db_manager._get_conn() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, chat_id, sender_contact_id, content, timestamp, status FROM message WHERE timestamp > ?", (since,))
+        cursor.execute("SELECT id, chat_id, sender_contact_id, content, timestamp, status FROM message WHERE timestamp > ? AND sender_contact_id NOT NULL", (since,))
         new_messages = [dict(row) for row in cursor.fetchall()]
         
     return jsonify({
