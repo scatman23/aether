@@ -13,7 +13,7 @@ We pursue a risk-based testing approach, divided into several levels to balance 
 Unit tests form the foundation of our quality assurance, testing isolated components without external dependencies.
 
 * **Backend (Python/Flask):** We use `pytest` for testing the middleware and cryptography modules. The focus is on verifying encryption and decryption routines, as well as the correct processing of SQLite database operations.
-* **Frontend (JavaScript/Electron):** We use `Jest` for testing the frontend logic and state management, independent of the user interface and inter-process communication (IPC).
+* **Frontend (JavaScript/Electron):** We use `vitest` for testing the frontend logic and state management, independent of the user interface and inter-process communication (IPC).
 
 ### 2.2 Integration Tests (Focus: Medium)
 
@@ -51,7 +51,7 @@ Our Continuous Integration pipeline is automated via **GitHub Actions** and runs
 
 1. **Linting & Formatting:** Code inspection using `Pylint` (Python), alongside `ESLint` and `Prettier` (JS).
 2. **Security Scans (SonarQube):** All code is analyzed by SonarQube to detect static security vulnerabilities, hardcoded secrets, or code smells early in the development lifecycle.
-3. **Automated Testing:** Execution of all `pytest` and `Jest` test suites.
+3. **Automated Testing:** Execution of all `pytest` and `vitest` test suites.
 
 ### Quality Gates
 
