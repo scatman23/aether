@@ -318,15 +318,19 @@ To ensure Clean Code guidelines and high maintainability, Aether implements the 
 
 In the current iteration, conscious architectural compromises were made to keep the project scope focused. This "Technical Debt" is documented and scheduled for future development cycles:
 
-* **MITM Vector during Bootstrapping:** The current "Trust On First Use" (TOFU) approach when exchanging Noise keys carries a theoretical Man-in-the-Middle risk at the Tor level.  
-*Solution:* Implementation of out-of-band verification (e.g., visual QR code scanning).
-* **I/O Inefficiency due to REST Polling:** The frontend's periodic polling to check for new messages creates continuous I/O load on the SQLite database.  
-*Solution:* Migration of the IPC interface from synchronous REST to asynchronous Server-Sent Events (SSE) or WebSockets.
-* **Perfect Forward Secrecy for Asynchronous Phases:** The Noise Protocol provides excellent security but is less flexible for long-lived asynchronous sessions than highly specialized protocols.  
-*Solution:* Migration of text message encryption to the *Double Ratchet Algorithm*.
-* **Linux System Tray Reliability (NFR-07):** The application minimizes to the system tray to run as a background daemon. However, on modern GNU/Linux desktop environments (especially Wayland/GNOME), system trays are notoriously unreliable.  
-*Solution:* Implementation of a pure headless daemon mode as a fallback option.
-* **Query Complexity:** Should the relational data model grow significantly in the future, maintaining the raw SQL repositories might become error-prone.  
-*Solution:* Evaluation of a lightweight Query Builder.
-* **Decentralized Small-Group Chats (Full-Mesh Topology):** Coordination among users currently requires separate direct messages.  
-*Solution:* Implementation of a pure P2P group chat where every participant maintains a direct Tor connection to every other participant (n-to-n mesh network). The database model is already normalized to support this gracefully, limiting the necessary future work solely to the application logic and synchronization protocols.
+* **Incomplete IPC Security Enforcement:** While the architecture defines a dynamic ephemeral API key to secure the Inter-Process Communication between Electron and Flask, the enforcement middleware is currently set to `REQUIRE_API_KEY = False` for development convenience. 
+    * *Solution:* Enable mandatory key validation and implement a secure key-handshake during the initial boot sequence.
+* **Database Connection Lifecycle Management:** The `DatabaseManager` currently utilizes the `with sqlite3.connect()` context manager, which in Python’s `sqlite3` module only manages transaction boundaries (commit/rollback) and does not automatically close the connection. This leads to resource warnings and potential memory leaks during long-running sessions.
+    * *Solution:* Refactor the Data Access Layer to use a proper Connection Pool or ensure explicit `.close()` calls in a teardown phase.
+* **Hardcoded System Status Logic:** The `/api/v1/system/status` endpoint currently utilizes "dummy logic" that assumes 100% bootstrap progress if an onion address exists, rather than polling the real-time status from the Tor daemon via `netutil`.
+    * *Solution:* Implement an event-based listener in `NetworkUtility` that hooks into the Tor `STATUS_BOOTSTRAP` events to provide accurate feedback to the UI.
+* **Placeholder for SQLCipher Integration:** Although the architecture specifies data-at-rest encryption, the current `register` and `login` methods treat the user password as a placeholder rather than passing it as a derived key to a full SQLCipher implementation.
+    * *Solution:* Integrate the `pysqlite3-binary` with SQLCipher support to enforce physical file-level encryption using the user's authenticated credentials.
+* **MITM Vector during Bootstrapping:** The current "Trust On First Use" (TOFU) approach when exchanging Noise keys carries a theoretical Man-in-the-Middle risk at the Tor level during the initial handshake.
+    * *Solution:* Implementation of out-of-band verification (e.g., visual QR code scanning) to verify identity keys.
+* **I/O Inefficiency due to REST Polling:** The frontend's periodic polling to check for new messages via the `system/sync` endpoint creates continuous I/O load and unnecessary database queries.
+    * *Solution:* Migration of the IPC interface from synchronous REST polling to an asynchronous model using WebSockets or Server-Sent Events (SSE).
+* **Perfect Forward Secrecy for Asynchronous Phases:** The Noise Protocol provides excellent security for active sessions but is less suited for long-lived asynchronous messaging than specialized P2P protocols.
+    * *Solution:* Migration of the end-to-end text message encryption to the *Double Ratchet Algorithm* (Signal Protocol) to ensure per-message PFS.
+* **Decentralized Small-Group Chats (Full-Mesh Topology):** Coordination among users currently requires separate direct messages.
+    * *Solution:* Implementation of a pure P2P group chat where every participant maintains a direct Tor connection to every other participant (n-to-n mesh network). The database model is already proactively normalized with junction tables (`chat_member`) to support this gracefully.
