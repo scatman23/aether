@@ -106,7 +106,7 @@ class NetworkUtility:
 
         except requests.exceptions.ConnectionError:
             print(
-                f"[NetUtil] NetzwerkERROR: Receiver ({target[:8]}...) is offline or not reachable")
+                f"[NetUtil] ERROR: Receiver ({target[:8]}...) is offline or not reachable")
             return False
         except requests.exceptions.Timeout:
             print(f"[NetUtil] Connection Timeout")
