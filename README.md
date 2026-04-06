@@ -10,7 +10,7 @@ Aether operates without any central relay or routing servers to eliminate metada
 
 * **Backend (Python Flask):** Functions as a local REST server, manages cryptographic keys, controls database access, and coordinates asynchronous tasks like message retries.
 * **Tor Network Layer:** Uses a bundled Tor daemon (C-Binary) to offload routing and NAT traversal entirely to the Tor network via v3 Onion Services, guaranteeing anonymity and obfuscating user IPs.
-* **Frontend (Electron):** Encapsulates the Graphical User Interface (GUI) and local state management. 
+* **Frontend (Electron):** Encapsulates the Graphical User Interface (GUI) and local state management.
 *Note: The frontend codebase is located in the `src-frontend` sub-repository. Please see `src-frontend/README.md` for frontend-specific documentation and commands.*
 
 ### Security Highlights
@@ -42,7 +42,7 @@ docker run -p 5000:5000 --name aether-client aether
 
 ## Contributing to Aether
 
-We use a Feature Branch Workflow based on Trunk-Based Development, and direct pushes to the `main` branch are strictly forbidden. 
+We use a Feature Branch Workflow based on Trunk-Based Development, and direct pushes to the `main` branch are strictly forbidden.
 
 * **Commits:** We strictly follow the Conventional Commits specification (e.g., `feat(tor): ...`, `fix(api): ...`).
 * **Pull Requests:** Every PR requires at least one approving review from another team member (Four-Eyes Principle) and must pass the GitHub Actions CI pipeline.
@@ -59,7 +59,7 @@ Aether's quality assurance relies on a risk-based testing approach heavily focus
     python -m venv .venv
 
     # Activate virtual enviroment (Linux)
-    .venv/bin/activate
+    source .venv/bin/activate
 
     # Activate virtual enviroment (Windows)
     .venv\Scripts\activate
@@ -75,6 +75,51 @@ Aether's quality assurance relies on a risk-based testing approach heavily focus
   # Generate coverage report
   pytest --cov=src --cov-report=term-missing
   ```
+
+## Automated Launchers & Test Environment
+
+To simplify the deployment and testing of the decoupled Aether architecture, two primary shell scripts are provided. These scripts automate the orchestration of Docker containers, health checks, and the Electron frontend.
+
+---
+
+### Standard Application Startup (`start_app.sh`)
+
+The `start_app.sh` script serves as the primary entry point for end-users and developers to run a single, fully functional Aether client.
+
+* **Initialization:** It automatically creates the `aether_data` directory on the host system to ensure persistent storage for AES-encrypted backups and SQLite databases.
+* **Orchestration:** The script starts the `aether-backend` (Tor node) and `aether-frontend` (Vite server) using the production `docker-compose.yml`.
+* **Health Checks:** It performs a polling loop to ensure the Vite frontend is fully operational before launching the Electron wrapper, preventing "Connection Refused" errors during startup.
+* **Graceful Shutdown:** Upon termination (SIGINT/CTRL+C), the script kills the Electron process and stops the frontend container while allowing the Tor backend to remain active in the background for passive message reception.
+
+**Usage:**
+```bash
+# Run the integrated launcher
+chmod +X start_app.sh
+sh start_app.sh
+```
+
+---
+
+### Multi-Client Test Environment (`test.sh`)
+
+For simulating P2P communication and verifying network behavior, the `test.sh` script initializes a dual-client environment on a single machine.
+
+* **Dual-Stack Setup:** Uses `docker-compose.test.yml` to spin up two completely isolated Aether instances (Backend-1/Frontend-1 on Port 5000/5173 and Backend-2/Frontend-2 on Port 5001/5174).
+* **Automated Quality Gate:** During the boot process, the script executes `pylint` on the `src/` directory and outputs the current code quality score directly to the terminal.
+* **P2P Interaction:** Launches two separate Electron windows, each connected to its respective backend, allowing for real-time testing of onion-routing and message exchange.
+* **Clean-up:** Includes a trap mechanism to ensure all background Electron processes are terminated when the test session is closed.
+
+**Usage:**
+```bash
+# Start the P2P simulation environment
+chmod +X test.sh
+sh test.sh
+
+# To tear down the test containers afterward:
+docker compose -f docker-compose.test.yml down
+```
+
+> **Note on Permissions:** Both scripts handle directory permissions for the `aether_data` volume automatically to ensure the Docker containers have sufficient I/O rights for database operations and profile exports.
 
 ## Operations & Updates
 
