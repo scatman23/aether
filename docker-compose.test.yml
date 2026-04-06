@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  aether-backend-1:
+    build: .
+    container_name: aether-backend-1
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    
+  aether-backend-2:
+    build: .
+    container_name: aether-backend-2
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+
+  aether-frontend-1:
+    build: ./src-frontend
+    container_name: aether-frontend-1
+    ports:
+      - "5173:5173"
+    environment:
+      - AETHER_API_PORT=5000 
+      - FRONTEND_PORT=5173
+    depends_on:
+      - aether-backend-1
+
+  aether-frontend-2:
+    build: ./src-frontend
+    container_name: aether-frontend-2
+    ports:
+      - "5174:5174"
+    environment:
+      - AETHER_API_PORT=5001
+      - FRONTEND_PORT=5174
+    depends_on:
+      - aether-backend-2
