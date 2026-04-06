@@ -194,7 +194,7 @@ def get_chat_messages(chat_id):
     """Return associated messages of chat_id"""
     if not db_manager:
         return jsonify({"error": "Database not initialized"}), 500
-
+    db_manager.set_incomming_messages_from_chat_as_read(chat_id)
     messages = db_manager.get_messages_for_chat(chat_id)
     return jsonify(messages), 200
 

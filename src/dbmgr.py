@@ -162,6 +162,11 @@ class DatabaseManager:
             cursor.execute("SELECT id as id, content, timestamp, sender_contact_id, status FROM message WHERE chat_id = ?", (chat_id,))
             return [dict(row) for row in cursor.fetchall()]
 
+    def set_incomming_messages_from_chat_as_read(self, chat_id):
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE message SET status = 'INCOMING_READ' WHERE chat_id = ? AND sender_contact_id IS NOT NULL", (chat_id,))
+
     def delete_message(self, message_id, chat_id):
         with self._get_conn() as conn:
             conn.execute("DELETE FROM message WHERE id = ? AND chat_id = ?", (message_id, chat_id))
