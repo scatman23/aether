@@ -2,19 +2,19 @@ version: '3.8'
 
 services:
   aether-backend:
-    build: .  # Sucht das Dockerfile im aktuellen Root-Verzeichnis (für Python)
+    build: . 
     container_name: aether-backend
     ports:
       - "5000:5000"
     restart: unless-stopped
     volumes:
-      - ./aether_data:/app  # Speichert deine .aetherdb Dateien sicher auf deinem Rechner ab
+      - ./aether_data:/app/data:z
 
   aether-frontend:
-    build: ./src-frontend  # Sucht das Dockerfile im Frontend-Ordner
+    build: ./src-frontend
     container_name: aether-frontend
     ports:
-      - "5173:5173"  # Ändern, falls dein Frontend einen anderen Port wie 3000 nutzt
+      - "5173:5173"
     environment:
       - AETHER_API_PORT=5000
     depends_on:

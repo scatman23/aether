@@ -1,9 +1,17 @@
 import logging
 import uuid
 from datetime import datetime
+import os
+import base64
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 from flask import Flask, request, jsonify
-from dbmgr import DatabaseManager
 from flask_cors import CORS
+
+from dbmgr import DatabaseManager
 
 app = Flask(__name__)
 CORS(app)
@@ -280,9 +288,63 @@ def system_sync():
 
 @app.route('/api/v1/export', methods=['POST'])
 def export_profile():
-    """Generiert ein AES-verschlüsseltes Backup (Dummy-Implementierung)."""
-    return jsonify({"status": "success", "file_path": "/path/to/export.aetherbak"}), 200
+    """generate AES-encrypted DB Backup"""
+    global db_manager 
+    
+    if not db_manager:
+        return jsonify({"error": "User not logged in"}), 401
 
+    data = request.json
+    
+    backup_password = data.get('export_password') 
+    
+    if not backup_password:
+        return jsonify({"error": "export password required"}), 400
+
+    db_file = db_manager.db_path
+    username = db_file.replace('.aetherdb', '').replace('data/', '')
+
+    export_dir = "data"
+    
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+
+    backup_file = os.path.join(export_dir, f"{username}_export.aetherbak")
+
+    try:
+        app.logger.info(f"[*] Start AES encrypted Backup for user {username}...")
+        
+        salt = os.urandom(16)
+        
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=480000,
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(backup_password.encode()))
+        fernet = Fernet(key)
+
+        with open(db_file, 'rb') as file:
+            db_data = file.read()
+
+        encrypted_data = fernet.encrypt(db_data)
+
+        with open(backup_file, 'wb') as file:
+            file.write(salt + encrypted_data)
+
+        app.logger.info(f"[*] Backup successfully generated: {backup_file}")
+
+        return jsonify({
+            "status": "success", 
+            "message": "backup successful",
+            "file_path": os.path.abspath(backup_file)
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"[*] ERROR: {e}")
+        return jsonify({"error": "Internal Error during Backup"}), 500
+    
 # ==========================================
 # P2P Endpoints (Tor-Network -> Backend)
 # NOT API Key protected
