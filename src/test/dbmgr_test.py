@@ -5,22 +5,22 @@ from dbmgr import DatabaseManager
 
 @pytest.fixture
 def test_db():
-    """
-    Erstellt für jeden Test eine frische, isolierte Datenbank als temporäre Datei.
-    Dadurch beeinträchtigen sich die Tests nicht gegenseitig.
-    """
     fd, temp_path = tempfile.mkstemp(suffix=".aetherdb")
-    os.close(fd) # Dateideskriptor schließen
+    os.close(fd)
 
     db = DatabaseManager(temp_path)
 
     yield db
 
+    try:
+        db._get_conn().close()
+    except Exception:
+        pass
+
     if os.path.exists(temp_path):
         os.remove(temp_path)
 
 def test_save_and_load_identity(test_db):
-    """Prüft, ob Tor-Identitäten korrekt gespeichert und geladen werden."""
     test_db.save_identity("onion_test_123", "secret_priv_key", "Alice")
     identity = test_db.load_identity()
 
@@ -29,17 +29,14 @@ def test_save_and_load_identity(test_db):
     assert identity["ed25519_private_key"] == "secret_priv_key"
 
 def test_create_contact_success(test_db):
-    """Prüft, ob ein Kontakt erfolgreich angelegt wird (TOFU)."""
     contact_id, chat_id = test_db.create_contact("Bob", "bob_onion_address")
 
     assert contact_id is not None
     assert chat_id is not None
 
 def test_create_contact_duplicate(test_db):
-    """Prüft, ob die Datenbank Duplikate bei Onion-Adressen verhindert."""
     test_db.create_contact("Bob", "bob_onion_address")
 
-    # Zweiter Kontakt mit gleicher Onion-Adresse sollte fehlschlagen/None zurückgeben
     result = test_db.create_contact("Copycat", "bob_onion_address")
 
     if isinstance(result, tuple):
@@ -48,11 +45,8 @@ def test_create_contact_duplicate(test_db):
         assert result is None
 
 def test_save_and_get_message(test_db):
-    """Prüft das Einfügen und Auslesen von Nachrichten."""
-    # Dummy Chat und Kontakt
     contact_id, chat_id = test_db.create_contact("Charlie", "charlie_onion")
 
-    # Nachricht speichern
     msg_id = test_db.save_message(
         chat_id=chat_id,
         content="Test Nachricht",
@@ -63,18 +57,14 @@ def test_save_and_get_message(test_db):
 
     assert msg_id is not None
 
-    # Nachrichten für diesen Chat abrufen
     messages = test_db.get_messages_for_chat(chat_id)
     assert len(messages) == 1
     assert messages[0]["content"] == "Test Nachricht"
     assert messages[0]["status"] == "OUTGOING_CREATED"
 
 def test_get_pending_messages(test_db):
-    """Prüft das Auslesen der Nachrichten-Warteschlange (Background Worker)."""
-    # 1. Dummy Kontakt und Chat anlegen
     contact_id, chat_id = test_db.create_contact("WorkerTest", "worker_onion")
 
-    # 2. Nachricht mit Status 'OUTGOING_CREATED' speichern
     test_db.save_message(
         chat_id=chat_id,
         content="Diese Nachricht hängt in der Warteschlange",
@@ -83,10 +73,8 @@ def test_get_pending_messages(test_db):
         sender_contact_id=None
     )
 
-    # 3. pending_messages abrufen
     pending = test_db.get_pending_messages()
 
-    # 4. Assertions
     assert len(pending) == 1
     assert pending[0]["content"] == "Diese Nachricht hängt in der Warteschlange"
     assert pending[0]["status"] == "OUTGOING_CREATED"
