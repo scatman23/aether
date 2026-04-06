@@ -159,7 +159,7 @@ class DatabaseManager:
     def get_messages_for_chat(self, chat_id):
         with self._get_conn() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id as message_id, content, timestamp, sender_contact_id, status FROM message WHERE chat_id = ?", (chat_id,))
+            cursor.execute("SELECT id as id, content, timestamp, sender_contact_id, status FROM message WHERE chat_id = ?", (chat_id,))
             return [dict(row) for row in cursor.fetchall()]
 
     def delete_message(self, message_id, chat_id):
